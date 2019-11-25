@@ -9,6 +9,9 @@ class View(object):
     def fill_table_prompt(self):
         pass
 
+    def launch_text_search_prompt(self, table_chosen):
+        pass
+
     def launch_insert_prompt(self, table_chosen):
         pass
 
@@ -31,6 +34,9 @@ class View(object):
         pass
 
     def create_add_prompt(self, table_name):
+        pass
+
+    def create_columns_chk_prompt(self, table_name):
         pass
 
     def create_columns_prompt(self, table_name):

@@ -46,7 +46,7 @@ class concrete_view(View):
             condition = upd_by + condition
         else:
             condition = 'True'
-        upd_cols_prompt = self.create_columns_prompt(table_chosen)
+        upd_cols_prompt = self.create_columns_chk_prompt(table_chosen)
         cols = prompt(upd_cols_prompt)['col_pr']
         new_data_prompt = create_add_cols_prompt(cols)
         columns = prompt(new_data_prompt)
@@ -69,21 +69,46 @@ class concrete_view(View):
     def launch_select_prompt(self, table_chosen):
         select_prompt = self.create_select_prompt(table_chosen)
         sel_by = prompt(select_prompt)['sel_pr']
-        if sel_by != 'All':
-            condition = prompt([{
-                'type': 'input',
-                'name': 'cond',
-                'message': 'enter the condition for selecting by {0}'.format(sel_by)
-            }])['cond']
-            data = sel_by + condition
+        print sel_by
+        cond_data = []
+        if not sel_by:
+            condition_string = 'False'
+        elif 'All' not in sel_by:
+            for x in range(0, len(sel_by), 1):
+                condition = prompt([{
+                    'type': 'input',
+                    'name': 'cond',
+                    'message': 'enter the condition for selecting by {0}'.format(sel_by[x])
+                }])['cond']
+                cond_data.append({'row': sel_by[x], 'cond': condition})
+            condition_string = '('
+            for cond in cond_data:
+                condition_string += cond['row'] + " " + cond['cond']
+                if cond != cond_data[-1]:
+                    condition_string += ' AND '
+            condition_string += ')'
         else:
-            data = 'True'
+            condition_string = 'True'
         limit = prompt([{
             'type': 'input',
             'name': 'limit',
             'message': 'limit number of rows read'
         }])['limit']
-        data += " LIMIT " + limit
+        end_data = {
+            'cond': condition_string,
+            'limit': limit
+        }
+        return end_data
+
+    def launch_text_search_prompt(self, table_chosen):
+        col_pr = self.create_columns_prompt(table_chosen)
+        column_to_search = prompt(col_pr)['col_pr']
+        text_piece = prompt([{
+            'type': 'input',
+            'name': 'txt',
+            'message': 'Enter text to search'
+        }])['txt']
+        data = {'col': column_to_search, 'textp': text_piece}
         return data
 
     def launch_operation_prompt(self):
@@ -129,7 +154,7 @@ class concrete_view(View):
             })
         return add_pr
 
-    def create_columns_prompt(self, table_name):
+    def create_columns_chk_prompt(self, table_name):
         schema = self.db_schema[table_name]
         col_pr = [
             {
@@ -146,11 +171,28 @@ class concrete_view(View):
             })
         return col_pr
 
+    def create_columns_prompt(self, table_name):
+        schema = self.db_schema[table_name]
+        col_pr = [
+            {
+                'type': 'list',
+                'message': 'select column for fulltext search',
+                'name': 'col_pr',
+                'choices': [
+                ]
+            }
+        ]
+        for elem in schema:
+            col_pr[0]['choices'].append({
+                'name': elem
+            })
+        return col_pr
+
     def create_select_prompt(self, table_name):
         schema = self.db_schema[table_name]
         sel_pr = [
             {
-                'type': 'list',
+                'type': 'checkbox',
                 'message': 'choose selection method',
                 'name': 'sel_pr',
                 'choices': [
@@ -192,6 +234,9 @@ class concrete_view(View):
             'choices': [
                 {
                     'name': 'Preview'
+                },
+                {
+                    'name': 'Text search'
                 },
                 {
                     'name': 'Add'

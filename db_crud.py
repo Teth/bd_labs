@@ -18,6 +18,8 @@ class DBOperations(Controller):
                'stadium': ['capacity', 'address', 'phone_number']
                }
 
+    text_cols = ['name', 'city', 'first_name', 'surname', 'address']
+
     def __init__(self):
         try:
             self.connection = psycopg2.connect(user="postgres",
@@ -39,10 +41,11 @@ class DBOperations(Controller):
     def get_schemas(self):
         return self.schemas
 
-    def read(self, table, data):
+    def read(self, table, conditions, limit):
         query = "select * from {0}" \
                 " WHERE {1} " \
-            .format(table, data)
+                " LIMIT {2}"  \
+            .format(table, conditions, limit)
         self.cursor.execute(query)
         rec = self.cursor.fetchall()
         return rec
@@ -68,7 +71,7 @@ class DBOperations(Controller):
             self.connection.commit()
             return True
         else:
-            raise Exception('SQL error during delete operation')
+            raise Exception('SQL error during update operation')
 
     '''
     pass table name and condition as in 'id>1' or 'name=John'
@@ -83,6 +86,18 @@ class DBOperations(Controller):
             return True
         else:
             raise Exception('SQL error during delete operation')
+
+    def fulltext_search(self, table, column, text_piece):
+        if column in self.text_cols and table in self.schemas:
+            query = "Select * \
+            from {0} where \
+            to_tsvector('english', {1}) @@ to_tsquery('english', '{2}')".format(table, column, text_piece)
+            self.cursor.execute(query)
+            rec = self.cursor.fetchall()
+            print 'aaa'
+            return rec
+        else:
+            raise Exception('Cannot do full-text search on non-text column or non existent table')
 
     def force_commit(self):
         self.connection.commit()

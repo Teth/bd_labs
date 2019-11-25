@@ -50,7 +50,7 @@ def run():
             if operation_chosen != 'Back':
                 if operation_chosen == 'Preview':
                     data = view.launch_select_prompt(table_chosen)
-                    res = controller.read(table_chosen, data)
+                    res = controller.read(table_chosen, data['cond'], data['limit'])
                     view.display_select_data(res, table_chosen)
                 if operation_chosen == 'Add':
                     data_dict = view.launch_insert_prompt(table_chosen)
@@ -61,7 +61,6 @@ def run():
                 if operation_chosen == 'Add Random':
                     data_dict = get_table_class(table_chosen).get_random()
                     data = tuple_from_table_dictionary(table_chosen, data_dict)
-
                     controller.insert(table_chosen, data)
                     view.display_insert_data(data, table_chosen)
                 if operation_chosen == 'Delete':
@@ -73,6 +72,10 @@ def run():
                     columns = key_value_string_from_dictionary(data['columns'])
                     controller.update(table_chosen, columns, data['condition'])
                     view.display_update_data(data['columns'], data['condition'], table_chosen)
+                if operation_chosen == 'Text search':
+                    data = view.launch_text_search_prompt(table_chosen)
+                    res = controller.fulltext_search(table_chosen, data['col'], data['textp'])
+                    view.display_select_data(res, table_chosen)
 
         except Exception as error:
             print('Error in model: ' + error.message)
