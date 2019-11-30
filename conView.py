@@ -1,5 +1,8 @@
+import datetime
+
 from PyInquirer import prompt
 from view import View
+
 
 def create_add_cols_prompt(columns_array):
     add_pr = [
@@ -14,12 +17,39 @@ def create_add_cols_prompt(columns_array):
     return add_pr
 
 
+def text_to_word_search_arr(text_piece):
+    word_str = '('
+    for word in text_piece:
+        word_str += word
+        if word != text_piece[-1]:
+            word_str += ' & '
+        else:
+            word_str += ')'
+    print word_str
+    return word_str
+
+
 class concrete_view(View):
 
     def __init__(self):
         pass
 
     db_schema = 'none'
+
+    def launch_joint_search_prompt(self):
+        is_active = prompt([{
+            'type': 'input',
+            'name': 'is_active',
+            'message': 'Is player active'
+        }])['is_active']
+        team_name = prompt([{
+            'type': 'input',
+            'name': 'team_name',
+            'message': 'Team name'
+        }])['team_name']
+        print is_active
+        print team_name
+        return {'player_is_active': is_active, 'team_name': team_name}
 
     def set_data(self, schema_data):
         self.db_schema = schema_data
@@ -103,12 +133,36 @@ class concrete_view(View):
     def launch_text_search_prompt(self, table_chosen):
         col_pr = self.create_columns_prompt(table_chosen)
         column_to_search = prompt(col_pr)['col_pr']
-        text_piece = prompt([{
-            'type': 'input',
-            'name': 'txt',
-            'message': 'Enter text to search'
-        }])['txt']
-        data = {'col': column_to_search, 'textp': text_piece}
+        type = prompt([{
+            'type': 'list',
+            'name': 'type',
+            'message': 'Choose full text search type',
+            'choices': [
+                {
+                    'name': 'Is not in text '
+                },
+                {
+                    'name': 'Is in'
+                }
+            ]
+        }])['type']
+        print type
+        text_piece = None
+        if type == 'Is not in text':
+            text_piece = prompt([{
+                'type': 'input',
+                'name': 'txt',
+                'message': 'Enter text to not include in search'
+            }])['txt']
+        else:
+            text_piece = prompt([{
+                'type': 'input',
+                'name': 'txt',
+                'message': 'Enter text to search'
+            }])['txt']
+        text_piece = text_piece.split()
+        text_piece = text_to_word_search_arr(text_piece)
+        data = {'in': type == 'Is in', 'col': column_to_search, 'textp': text_piece}
         return data
 
     def launch_operation_prompt(self):
@@ -236,6 +290,9 @@ class concrete_view(View):
                     'name': 'Preview'
                 },
                 {
+                    'name': 'Joint search'
+                },
+                {
                     'name': 'Text search'
                 },
                 {
@@ -260,13 +317,20 @@ class concrete_view(View):
     def display_select_data(self, data, table_name):
         print('Data from table: {0}'.format(table_name))
         print('-----------------------------')
-        str = 'id    '
+        columns_str = 'id    '
         for elem in self.db_schema[table_name]:
-            str += elem + '   '
-        print (str)
+            columns_str += elem + '   '
+        print columns_str
         print('-----------------------------')
         for item in data:
-            print item
+            itemstr = ''
+            for col in item:
+                if type(col) == datetime.date:
+                    textdata = col.strftime("%d-%m-%Y")
+                else:
+                    textdata = col.__repr__()
+                itemstr += textdata + ' | '
+            print itemstr
         print('-----------------------------')
 
     def display_delete_data(self, data, table_name):

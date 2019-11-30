@@ -94,10 +94,29 @@ class DBOperations(Controller):
             to_tsvector('english', {1}) @@ to_tsquery('english', '{2}')".format(table, column, text_piece)
             self.cursor.execute(query)
             rec = self.cursor.fetchall()
-            print 'aaa'
             return rec
         else:
-            raise Exception('Cannot do full-text search on non-text column or non existent table')
+            raise Exception('Cannot do full-text search on non-text column')
+
+    def no_fulltext_search(self, table, column, text_piece):
+        if column in self.text_cols and table in self.schemas:
+            query = "Select * \
+            from {0} where \
+            to_tsvector('english', {1}) @@ to_tsquery('english', '!{2}')".format(table, column, text_piece)
+            self.cursor.execute(query)
+            rec = self.cursor.fetchall()
+            return rec
+        else:
+            raise Exception('Cannot do full-text search on non-text column')
+
+    def joint_search(self, is_active, team_name):
+        query = "SELECT player.*, team_has_player.team_id, teams.* \
+                FROM player LEFT OUTER JOIN team_has_player ON (player.id = team_has_player.player_id) \
+                LEFT OUTER JOIN teams ON (team_id = teams.id) \
+                Where (player.is_active = {0} And teams.name = {1})".format(is_active, team_name)
+        self.cursor.execute(query)
+        rec = self.cursor.fetchall()
+        return rec
 
     def force_commit(self):
         self.connection.commit()

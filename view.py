@@ -9,6 +9,9 @@ class View(object):
     def fill_table_prompt(self):
         pass
 
+    def launch_joint_search_prompt(self):
+        pass
+
     def launch_text_search_prompt(self, table_chosen):
         pass
 

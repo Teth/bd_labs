@@ -54,7 +54,6 @@ def run():
                     view.display_select_data(res, table_chosen)
                 if operation_chosen == 'Add':
                     data_dict = view.launch_insert_prompt(table_chosen)
-                    print data_dict
                     data = tuple_from_table_dictionary(table_chosen, data_dict)
                     controller.insert(table_chosen, data)
                     view.display_insert_data(data, table_chosen)
@@ -74,9 +73,16 @@ def run():
                     view.display_update_data(data['columns'], data['condition'], table_chosen)
                 if operation_chosen == 'Text search':
                     data = view.launch_text_search_prompt(table_chosen)
-                    res = controller.fulltext_search(table_chosen, data['col'], data['textp'])
-                    view.display_select_data(res, table_chosen)
+                    if data['in'] == True:
+                        res = controller.fulltext_search(table_chosen, data['col'], data['textp'])
+                    else:
+                        res = controller.no_fulltext_search(table_chosen, data['col'], data['textp'])
 
+                    view.display_select_data(res, table_chosen)
+                if operation_chosen == 'Joint search':
+                    data = view.launch_joint_search_prompt()
+                    res = controller.joint_search(data['player_is_active'], data['team_name'])
+                    view.display_select_data(res, table_chosen)
         except Exception as error:
             print('Error in model: ' + error.message)
             controller.force_commit()

@@ -13,6 +13,12 @@ class Controller(object):
     def insert(self, table, data):
         return self.concrete_model.insert(table, data)
 
+    def joint_search(self, is_active, team_name):
+        return self.concrete_model.joint_search(is_active, team_name)
+
+    def no_fulltext_search(self, table, column, text_piece):
+        return self.concrete_model.no_fulltext_search(table, column, text_piece)
+
     def fulltext_search(self,table, column, text_piece):
         return self.concrete_model.fulltext_search(table, column, text_piece)
 
